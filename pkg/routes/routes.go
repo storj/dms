@@ -63,7 +63,10 @@ func (r *DMSRouter) Status(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(http.StatusOK, all)
+	if err != nil {
+		c.Error(err)
+	}
+	return c.Render(http.StatusOK, "status", all)
 }
 
 // Ingest is the primary heartbeat route

@@ -2,6 +2,8 @@ package main
 
 import (
 	"crypto/subtle"
+	"html/template"
+	"io"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -21,6 +23,14 @@ var (
 	heartbeatExpiration = kingpin.Flag("heartbeat-expiration", "").Default("10m").Duration()
 )
 
+type Template struct {
+	templates *template.Template
+}
+
+func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
+}
+
 func main() {
 	kingpin.Parse()
 
@@ -34,6 +44,15 @@ func main() {
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+
+	tmpl, err := template.New("status").Parse(routes.StatusPageTemplate)
+	if err != nil {
+		panic(err)
+	}
+	t := &Template{
+		templates: tmpl,
+	}
+	e.Renderer = t
 
 	// dms router
 	dmsRouter := &routes.DMSRouter{
