@@ -182,6 +182,8 @@ func TestStatusEmpty(t *testing.T) {
 	err = json.Unmarshal(rec.Body.Bytes(), &resp)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(resp))
+
+	assert.Nil(t, etcD.Purge())
 }
 
 func TestStatusNonEmpty(t *testing.T) {
@@ -219,6 +221,8 @@ func TestStatusNonEmpty(t *testing.T) {
 	val, ok := resp["env=test"]
 	assert.True(t, ok)
 	assert.Equal(t, last.UnixNano(), val.Last.UnixNano)
+
+	assert.Nil(t, etcD.Purge())
 }
 
 func TestIngest(t *testing.T) {
@@ -272,6 +276,8 @@ func TestIngest(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(all))
 	assert.NotEmpty(t, all["env=test"])
+
+	assert.Nil(t, etcD.Purge())
 }
 
 func setup(t *testing.T) *embed.Etcd {
