@@ -10,9 +10,10 @@ services:
   - docker
 
 env:
-  - PINK='\033]01;31\]'
-  - NC='\033[0m' # No Color
-  
+  global:
+    - PINK='\033]01;31\]' 
+    - NC='\033[0m' # No Color
+
 script:
   - echo -e "${PINK}--> starting go tests${NC}"
   - go test -v ./...
