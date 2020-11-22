@@ -220,7 +220,7 @@ func TestStatusNonEmpty(t *testing.T) {
 	assert.Equal(t, 1, len(resp))
 	val, ok := resp["env=test"]
 	assert.True(t, ok)
-	assert.Equal(t, last.UnixNano(), val.Last.UnixNano)
+	assert.Equal(t, last.UnixNano(), val.Last.UnixNano())
 
 	assert.Nil(t, etcD.Purge())
 }
