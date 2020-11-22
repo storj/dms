@@ -9,13 +9,6 @@ git:
 services:
   - docker
 
-env:
-  global:
-    - PINK='\033]01;31\]' 
-    - NC='\033[0m' # No Color
-
 script:
-  - echo -e "${PINK}--> starting go tests${NC}"
   - go test -v -p 1 ./...
-  - echo -e "${PINK}--> starting docker build${NC}"
   - docker build -t kristaxox/dms .
