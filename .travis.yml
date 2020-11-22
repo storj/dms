@@ -10,5 +10,5 @@ services:
   - docker
 
 script:
-  - go test -v ./...
-  - docker build -t kristaxox/dms -f ./Dockerfile
+  - go test -v -p 1 ./...
+  - docker build -t kristaxox/dms .

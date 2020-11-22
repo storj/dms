@@ -26,6 +26,8 @@ func (r *DMSRouter) Pingdom(c echo.Context) error {
 		logrus.WithError(err).Error("unable to retrieve all stored data from etcd")
 	}
 	for k, v := range all {
+		tStr := v.Last.String()
+		logrus.Infof("%+v", tStr)
 		if time.Since(v.Last) > (r.HeartbeatExpiration) {
 			logrus.Debugf("environment=%s has not checked in for %s", k, r.HeartbeatExpiration)
 			return c.JSON(http.StatusInternalServerError, "one of more services have not checked in")

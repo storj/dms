@@ -1,1 +1,3 @@
 dms
+pkg/storage/default.etcd
+pkg/routes/default.etcd
