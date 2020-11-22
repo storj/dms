@@ -16,6 +16,6 @@ env:
 
 script:
   - echo -e "${PINK}--> starting go tests${NC}"
-  - go test -v ./...
+  - go test -v -p 1 ./...
   - echo -e "${PINK}--> starting docker build${NC}"
   - docker build -t kristaxox/dms .
