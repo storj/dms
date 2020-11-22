@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/pkg/errors"
+	"go.etcd.io/etcd/clientv3"
 )
 
 var (
@@ -61,4 +61,12 @@ func (etcds *EtcdStorage) All() (map[string]Data, error) {
 		all[string(item.Key)] = data
 	}
 	return all, nil
+}
+
+// Purge removes all keys with "env" prefix
+func (etcds *EtcdStorage) Purge() error {
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	_, err := etcds.kv.Delete(ctx, "env", clientv3.WithPrefix())
+	cancel()
+	return err
 }

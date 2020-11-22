@@ -3,12 +3,11 @@ package main
 import (
 	"crypto/subtle"
 
-	"github.com/kristaxox/dms/pkg/routes"
-
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"gopkg.in/alecthomas/kingpin.v2"
 
+	"github.com/kristaxox/dms/pkg/routes"
 	"github.com/kristaxox/dms/pkg/storage"
 )
 
