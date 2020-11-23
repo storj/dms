@@ -11,4 +11,12 @@ services:
 
 script:
   - go test -v -p 1 ./...
-  - docker build -t kristaxox/dms .
+  - docker build -t kristaxox/dms:${TRAVIS_COMMIT} .
+
+after_success:
+  - if [[ "$TRAVIS_BRANCH" == "main" ]]; then
+      docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ;
+      docker push kristaxox/dms:${TRAVIS_COMMIT} ;
+      docker tag kristaxox/dms:${TRAVIS_COMMIT} kristaxox/dms:latest ;
+      docker push kristaxox/dms:latest
+    fi
