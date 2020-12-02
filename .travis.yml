@@ -18,5 +18,5 @@ after_success:
       docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ;
       docker push kristaxox/dms:${TRAVIS_COMMIT} ;
       docker tag kristaxox/dms:${TRAVIS_COMMIT} kristaxox/dms:latest ;
-      docker push kristaxox/dms:latest
+      docker push kristaxox/dms:latest ;
     fi
