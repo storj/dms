@@ -8,4 +8,5 @@ RUN cd /src && go build -o dms ./cmd/dms.go
 FROM alpine
 WORKDIR /app
 COPY --from=build-env /src/dms /app/
-ENTRYPOINT ./dms
+COPY --from=build-env /src/public /app/public
+ENTRYPOINT /app/dms

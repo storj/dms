@@ -1,0 +1,47 @@
+<html>
+    <header>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css" integrity="sha512-EZLkOqwILORob+p0BXZc+Vm3RgJBOe1Iq/0fiI7r/wJgzOFZMlsqTa29UEl6v6U6gsV4uIpsNZoV32YZqrCRCQ==" crossorigin="anonymous" />
+        <meta charset="utf-8">
+        <title>DMS</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </header>
+    <body>
+        <div class="row">
+            <div class="twelve columns">
+                </h1><pre><code>dms</code></pre>
+            </div>
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="ten columns">
+                    <h2>status</h2>
+                    <p>
+                        <table class="u-full-width">
+                            <thead>
+                                <tr>
+                                  <th>environnent</th>
+                                  <th>last check in</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{ range $key, $value := . }}
+                                <tr>
+                                    <td>{{ $key }}</td>
+                                    <td>{{ $value }}</td>
+                                </tr>
+                                {{ end }}
+                            </tbody>
+                        </table>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+    <footer>
+        <div class="row">
+            <div class="twelve columns">
+                </h1><pre><code>made with <3 by kristaxox</code></pre>
+            </div>
+        </div>
+    </footer>
+</html>

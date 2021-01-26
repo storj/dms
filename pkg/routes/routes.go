@@ -57,13 +57,17 @@ func (r *DMSRouter) Register(c echo.Context) error {
 	})
 }
 
+func (r *DMSRouter) RegisterForm(c echo.Context) error {
+	return c.Render(http.StatusOK, "register_form.html", nil)
+}
+
 // Status is an internal endpoint
 func (r *DMSRouter) Status(c echo.Context) error {
 	all, err := r.Store.All()
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(http.StatusOK, all)
+	return c.Render(http.StatusOK, "status.html", all)
 }
 
 // Ingest is the primary heartbeat route

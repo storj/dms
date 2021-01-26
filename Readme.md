@@ -5,7 +5,7 @@ Simple aggregate dead (wo)man switch
 
 #### Register
 ```bash
-curl --user <basic_auth_user>:<basic_auc_password> -d "environment=<environment_name>" <dms_endpoint>/register
+curl --user <basic_auth_user>:<basic_auc_password> -d "environment=<environment_name>" <dms_endpoint>/register?json
 ```
 
 #### Ingest
@@ -20,5 +20,5 @@ curl <dms_endpoint>/pingdom
 
 ### Status
 ```bash
-curl --user <basic_auth_user>:<basic_auc_password> <dms_endpoint>/status
+curl --user <basic_auth_user>:<basic_auc_password> <dms_endpoint>/status?json
 ```
