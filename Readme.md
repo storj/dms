@@ -23,4 +23,4 @@ curl <dms_endpoint>/pingdom
 curl --user <basic_auth_user>:<basic_auc_password> <dms_endpoint>/status
 ```
 ### Author
-- [kristaxox](github.com/kristaxox)
+- [kristaxox](https://github.com/kristaxox)
