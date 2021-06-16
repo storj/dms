@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/embed"
 
-	"github.com/kristaxox/dms/pkg/storage"
+	"github.com/storj/dms/pkg/storage"
 )
 
 func TestEtcdStorage(t *testing.T) {

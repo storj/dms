@@ -7,8 +7,8 @@ import (
 	"github.com/labstack/echo/middleware"
 	"gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/kristaxox/dms/pkg/routes"
-	"github.com/kristaxox/dms/pkg/storage"
+	"github.com/storj/dms/pkg/routes"
+	"github.com/storj/dms/pkg/storage"
 )
 
 var (
