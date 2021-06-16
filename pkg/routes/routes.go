@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/sirupsen/logrus"
 
-	"github.com/kristaxox/dms/pkg/storage"
+	"github.com/storj/dms/pkg/storage"
 )
 
 // DMSRouter contains all the routes for the DMS functionality

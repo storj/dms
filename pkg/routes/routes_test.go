@@ -15,8 +15,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/embed"
 
-	"github.com/kristaxox/dms/pkg/routes"
-	"github.com/kristaxox/dms/pkg/storage"
+	"github.com/storj/dms/pkg/routes"
+	"github.com/storj/dms/pkg/storage"
 )
 
 func TestPingdomEmpty(t *testing.T) {
