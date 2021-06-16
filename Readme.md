@@ -22,3 +22,5 @@ curl <dms_endpoint>/pingdom
 ```bash
 curl --user <basic_auth_user>:<basic_auc_password> <dms_endpoint>/status
 ```
+### Author
+- [kristaxox](github.com/kristaxox)
