@@ -6,10 +6,12 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/ZeFort/chance"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"github.com/stretchr/testify/assert"
@@ -19,10 +21,15 @@ import (
 	"github.com/storj/dms/pkg/storage"
 )
 
+var (
+	c         *chance.Chance
+	usedPorts []int
+)
+
 func TestPingdomEmpty(t *testing.T) {
-	e := setup(t)
+	e, c1 := setup(t)
 	defer e.Close()
-	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
+	etcD, err := storage.NewEtcdStorage([]string{c1})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -47,9 +54,9 @@ func TestPingdomEmpty(t *testing.T) {
 }
 
 func TestPingdomValid(t *testing.T) {
-	e := setup(t)
+	e, c1 := setup(t)
 	defer e.Close()
-	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
+	etcD, err := storage.NewEtcdStorage([]string{c1})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -75,9 +82,9 @@ func TestPingdomValid(t *testing.T) {
 }
 
 func TestPingdomExpired(t *testing.T) {
-	e := setup(t)
+	e, c1 := setup(t)
 	defer e.Close()
-	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
+	etcD, err := storage.NewEtcdStorage([]string{c1})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -103,15 +110,15 @@ func TestPingdomExpired(t *testing.T) {
 	incidents, err := dmsRouter.Store.AllIncidents()
 	assert.Nil(t, err)
 	d := time.Now().Format("2006-01-02")
-	assert.Equal(t, 1, len(incidents[fmt.Sprintf("env=test/incidents/%s", d)]))
+	assert.Equal(t, 1, len(incidents[fmt.Sprintf("env/test/incidents/%s", d)]))
 
 	assert.Nil(t, etcD.Purge("env"))
 }
 
 func TestRegister(t *testing.T) {
-	e := setup(t)
+	e, c1 := setup(t)
 	defer e.Close()
-	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
+	etcD, err := storage.NewEtcdStorage([]string{c1})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -159,9 +166,9 @@ func TestRegister(t *testing.T) {
 }
 
 func TestStatusEmpty(t *testing.T) {
-	e := setup(t)
+	e, c1 := setup(t)
 	defer e.Close()
-	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
+	etcD, err := storage.NewEtcdStorage([]string{c1})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -192,9 +199,9 @@ func TestStatusEmpty(t *testing.T) {
 }
 
 func TestStatusNonEmpty(t *testing.T) {
-	e := setup(t)
+	e, c1 := setup(t)
 	defer e.Close()
-	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
+	etcD, err := storage.NewEtcdStorage([]string{c1})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -223,7 +230,7 @@ func TestStatusNonEmpty(t *testing.T) {
 	err = json.Unmarshal(rec.Body.Bytes(), &resp)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(resp))
-	val, ok := resp["env=test/last"]
+	val, ok := resp["env/test/last"]
 	assert.True(t, ok)
 	assert.Equal(t, last.UnixNano(), val.UnixNano())
 
@@ -231,9 +238,9 @@ func TestStatusNonEmpty(t *testing.T) {
 }
 
 func TestIncidentsEmpty(t *testing.T) {
-	e := setup(t)
+	e, c1 := setup(t)
 	defer e.Close()
-	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
+	etcD, err := storage.NewEtcdStorage([]string{c1})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -264,9 +271,9 @@ func TestIncidentsEmpty(t *testing.T) {
 }
 
 func TestIncidentsNonEmpty(t *testing.T) {
-	e := setup(t)
+	e, c1 := setup(t)
 	defer e.Close()
-	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
+	etcD, err := storage.NewEtcdStorage([]string{c1})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -295,7 +302,7 @@ func TestIncidentsNonEmpty(t *testing.T) {
 	err = json.Unmarshal(rec.Body.Bytes(), &resp)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(resp))
-	val, ok := resp["env=test/incidents/2021-06-21"]
+	val, ok := resp["env/test/incidents/2021-06-21"]
 	assert.True(t, ok)
 	assert.Equal(t, 1, len(val))
 
@@ -303,9 +310,9 @@ func TestIncidentsNonEmpty(t *testing.T) {
 }
 
 func TestIngest(t *testing.T) {
-	e := setup(t)
+	e, c1 := setup(t)
 	defer e.Close()
-	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
+	etcD, err := storage.NewEtcdStorage([]string{c1})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -352,18 +359,23 @@ func TestIngest(t *testing.T) {
 	all, err := etcD.AllCheckins()
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(all))
-	assert.NotEmpty(t, all["env=test/last"])
+	assert.NotEmpty(t, all["env/test/last"])
 
 	assert.Nil(t, etcD.Purge("env"))
 }
 
-func setup(t *testing.T) *embed.Etcd {
+func setup(t *testing.T) (*embed.Etcd, string) {
 	// launch etcd server
 	cfg := embed.NewConfig()
 	cfg.Dir = "default.etcd"
+	p1, p2 := getPorts()
+	cfg.LPUrls = []url.URL{{Scheme: "http", Host: fmt.Sprintf("127.0.0.1:%d", p1)}}
+	cfg.LCUrls = []url.URL{{Scheme: "http", Host: fmt.Sprintf("127.0.0.1:%d", p2)}}
+	cfg.LogOutputs = []string{"stderr"}
 	e, err := embed.StartEtcd(cfg)
 	if err != nil {
 		log.Fatal(err)
+		t.Fail()
 	}
 	select {
 	case <-e.Server.ReadyNotify():
@@ -373,5 +385,19 @@ func setup(t *testing.T) *embed.Etcd {
 		log.Printf("Server took too long to start!")
 		t.Fail()
 	}
-	return e
+	connectionString := fmt.Sprintf("127.0.0.1:%d", p2)
+	return e, connectionString
+}
+
+func getPorts() (int, int) {
+	c = chance.New()
+portPick:
+	p1 := c.IntBtw(3100, 3200)
+	p2 := c.IntBtw(3100, 3200)
+	for _, b := range usedPorts {
+		if b == p1 || b == p2 {
+			goto portPick
+		}
+	}
+	return p1, p2
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -40,8 +39,13 @@ func NewEtcdStorage(endpoints []string) (*EtcdStorage, error) {
 // Store stores the key
 func (etcds *EtcdStorage) StoreCheckin(key string, value time.Time) error {
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
-	encoded, _ := json.Marshal(value)
-	_, err := etcds.kv.Put(ctx, fmt.Sprintf("env=%s/last", key), string(encoded))
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		cancel()
+		return errors.Wrap(err, "failed to store key")
+	}
+	key = strings.TrimSuffix(strings.TrimPrefix(key, "env/"), "/last") // sanitize the strings
+	_, err = etcds.kv.Put(ctx, fmt.Sprintf("env/%s/last", key), string(encoded))
 	cancel()
 	return errors.Wrap(err, "failed to store key")
 }
@@ -53,7 +57,8 @@ func (etcds *EtcdStorage) StoreIncident(key string, date string, value []time.Ti
 		cancel()
 		return errors.Wrap(err, "failed to store key")
 	}
-	_, err = etcds.kv.Put(ctx, fmt.Sprintf("env=%s/incidents/%s", key, date), string(encoded))
+	key = strings.TrimSuffix(strings.TrimPrefix(key, "env/"), "/last") // sanitize the strings
+	_, err = etcds.kv.Put(ctx, fmt.Sprintf("env/%s/incidents/%s", key, date), string(encoded))
 	cancel()
 	return errors.Wrap(err, "failed to store key")
 }
@@ -88,7 +93,6 @@ func (etcds *EtcdStorage) AllIncidents() (map[string][]string, error) {
 	}
 	all := map[string][]string{}
 	for _, item := range v.Kvs {
-		log.Printf("1. %+v - %+v", string(item.Key), string(item.Value))
 		if strings.Contains(string(item.Key), "incidents") {
 			var data []string
 			if err := json.Unmarshal(item.Value, &data); err != nil {

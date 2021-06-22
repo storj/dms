@@ -3,6 +3,7 @@ module github.com/storj/dms
 go 1.15
 
 require (
+	github.com/ZeFort/chance v0.0.0-20150129172704-bd0104b650ee
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/alecthomas/units v0.0.0-20201120081800-1786d5ef83d4 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect

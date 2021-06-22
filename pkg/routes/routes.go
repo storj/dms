@@ -2,7 +2,6 @@ package routes
 
 import (
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -30,7 +29,7 @@ func (r *DMSRouter) Pingdom(c echo.Context) error {
 		if v != (time.Time{}) {
 			if time.Since(v) > (r.HeartbeatExpiration) {
 				logrus.Debugf("environment=%s has not checked in for %s", k, r.HeartbeatExpiration)
-				r.Store.StoreIncident(strings.TrimPrefix(strings.TrimSuffix(k, "/last"), "env="), time.Now().Format("2006-01-02"), []time.Time{time.Now()})
+				r.Store.StoreIncident(k, time.Now().Format("2006-01-02"), []time.Time{time.Now()})
 				return c.JSON(http.StatusInternalServerError, "one of more services have not checked in")
 			}
 		}

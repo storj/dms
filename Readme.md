@@ -18,9 +18,15 @@ curl -H "Authorization: Bearer <jwt_token>" -XPOST <dms_endpoint>/ingest
 curl <dms_endpoint>/pingdom
 ```
 
-### Status
+#### Status
 ```bash
 curl --user <basic_auth_user>:<basic_auc_password> <dms_endpoint>/status
 ```
+
+#### Incidents
+```bash
+curl --user <basic_auth_user>:<basic_auc_password> <dms_endpoint>/incidents
+```
+
 ### Author
 - [kristaxox](https://github.com/kristaxox)

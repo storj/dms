@@ -38,7 +38,7 @@ func TestEtcdStorage(t *testing.T) {
 	allInc, err := etcD.AllIncidents()
 	assert.Nil(t, err)
 	log.Printf("%+v", allInc)
-	assert.Equal(t, 1, len(allInc["env=foo/incidents/2021-07-17"]))
+	assert.Equal(t, 1, len(allInc["env/foo/incidents/2021-07-17"]))
 
 	assert.Nil(t, etcD.Purge("env"))
 
