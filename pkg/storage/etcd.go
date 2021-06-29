@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -52,13 +53,22 @@ func (etcds *EtcdStorage) All() (map[string]Data, error) {
 	if err != nil {
 		return map[string]Data{}, errors.Wrap(err, "failed to retrieve all stored values")
 	}
+
+	var valsInvalidFormat []string
 	all := map[string]Data{}
 	for _, item := range v.Kvs {
 		var data Data
 		if err := json.Unmarshal(item.Value, &data); err != nil {
-			return map[string]Data{}, nil
+			valsInvalidFormat = append(valsInvalidFormat, string(item.Key))
+			continue
 		}
 		all[string(item.Key)] = data
+	}
+
+	if len(valsInvalidFormat) > 0 {
+		return all, errors.Wrap(err,
+			fmt.Sprintf("failed unmarshaling the stored values with key: %s", strings.Join(valsInvalidFormat, ", ")),
+		)
 	}
 	return all, nil
 }

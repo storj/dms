@@ -1,7 +1,9 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -21,18 +23,34 @@ type DMSRouter struct {
 // Pingdom is the endpoint that pingdom will query, it returns 200 if all the checks are within the heartbearExpiration
 // and it returns 500 if any of the checks are outside of the heartbearExpiration
 func (r *DMSRouter) Pingdom(c echo.Context) error {
-	all, err := r.Store.All()
-	if err != nil {
-		logrus.WithError(err).Error("unable to retrieve all stored data from etcd")
+	all, errStore := r.Store.All()
+	if errStore != nil {
+		logrus.WithError(errStore).Error("unable to retrieve all stored data from etcd")
 	}
+
+	var envsNotChecked []string
 	for k, v := range all {
 		if v.Last != (time.Time{}) {
 			if time.Since(v.Last) > (r.HeartbeatExpiration) {
 				logrus.Debugf("environment=%s has not checked in for %s", k, r.HeartbeatExpiration)
-				return c.JSON(http.StatusInternalServerError, "one of more services have not checked in")
+				envsNotChecked = append(envsNotChecked, k)
 			}
 		}
 	}
+
+	var errMsgs []string
+	if errStore != nil {
+		errMsgs = append(errMsgs, errStore.Error())
+	}
+
+	if len(envsNotChecked) > 0 {
+		errMsgs = append(errMsgs, fmt.Sprintf("the following services have not checked in: %s", strings.Join(envsNotChecked, ", ")))
+	}
+
+	if len(errMsgs) > 0 {
+		return c.JSON(http.StatusInternalServerError, strings.Join(errMsgs, ". "))
+	}
+
 	return c.JSON(http.StatusOK, "all services have checked in")
 }
 
