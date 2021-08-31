@@ -3,6 +3,7 @@ package storage_test
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"testing"
 	"time"
 
@@ -17,7 +18,7 @@ func TestEtcdStorage(t *testing.T) {
 	e := setup(t)
 	defer e.Close()
 
-	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
+	etcD, err := storage.NewEtcdStorage([]string{"localhost:2382"})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -58,6 +59,8 @@ func setup(t *testing.T) *embed.Etcd {
 	// launch etcd server
 	cfg := embed.NewConfig()
 	cfg.Dir = "default.etcd"
+	cfg.LPUrls = []url.URL{{Scheme: "http", Host: "127.0.0.1:2381"}}
+	cfg.LCUrls = []url.URL{{Scheme: "http", Host: "127.0.0.1:2382"}}
 	e, err := embed.StartEtcd(cfg)
 	if err != nil {
 		log.Fatal(err)

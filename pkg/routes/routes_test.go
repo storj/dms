@@ -6,12 +6,10 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/ZeFort/chance"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"github.com/stretchr/testify/assert"
@@ -21,15 +19,12 @@ import (
 	"github.com/storj/dms/pkg/storage"
 )
 
-var (
-	c         *chance.Chance
-	usedPorts []int
-)
-
 func TestPingdomEmpty(t *testing.T) {
-	e, c1 := setup(t)
+	// launch etcd server
+	e := setup(t)
 	defer e.Close()
-	etcD, err := storage.NewEtcdStorage([]string{c1})
+
+	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -54,9 +49,11 @@ func TestPingdomEmpty(t *testing.T) {
 }
 
 func TestPingdomValid(t *testing.T) {
-	e, c1 := setup(t)
+	// launch etcd server
+	e := setup(t)
 	defer e.Close()
-	etcD, err := storage.NewEtcdStorage([]string{c1})
+
+	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -82,9 +79,11 @@ func TestPingdomValid(t *testing.T) {
 }
 
 func TestPingdomExpired(t *testing.T) {
-	e, c1 := setup(t)
+	// launch etcd server
+	e := setup(t)
 	defer e.Close()
-	etcD, err := storage.NewEtcdStorage([]string{c1})
+
+	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -102,8 +101,9 @@ func TestPingdomExpired(t *testing.T) {
 
 	rec = httptest.NewRecorder()
 	c = ech.NewContext(req, rec)
-	last := time.Now().AddDate(0, -1, 0)
-	dmsRouter.Store.StoreCheckin("test", last)
+	last := time.Now().AddDate(0, 0, -1)
+	err = dmsRouter.Store.StoreCheckin("test", last)
+	assert.Nil(t, err)
 	assert.Nil(t, dmsRouter.Pingdom(c))
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 
@@ -116,9 +116,11 @@ func TestPingdomExpired(t *testing.T) {
 }
 
 func TestRegister(t *testing.T) {
-	e, c1 := setup(t)
+	// launch etcd server
+	e := setup(t)
 	defer e.Close()
-	etcD, err := storage.NewEtcdStorage([]string{c1})
+
+	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -166,9 +168,11 @@ func TestRegister(t *testing.T) {
 }
 
 func TestStatusEmpty(t *testing.T) {
-	e, c1 := setup(t)
+	// launch etcd server
+	e := setup(t)
 	defer e.Close()
-	etcD, err := storage.NewEtcdStorage([]string{c1})
+
+	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -199,9 +203,11 @@ func TestStatusEmpty(t *testing.T) {
 }
 
 func TestStatusNonEmpty(t *testing.T) {
-	e, c1 := setup(t)
+	// launch etcd server
+	e := setup(t)
 	defer e.Close()
-	etcD, err := storage.NewEtcdStorage([]string{c1})
+
+	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -238,9 +244,11 @@ func TestStatusNonEmpty(t *testing.T) {
 }
 
 func TestIncidentsEmpty(t *testing.T) {
-	e, c1 := setup(t)
+	// launch etcd server
+	e := setup(t)
 	defer e.Close()
-	etcD, err := storage.NewEtcdStorage([]string{c1})
+
+	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -271,9 +279,11 @@ func TestIncidentsEmpty(t *testing.T) {
 }
 
 func TestIncidentsNonEmpty(t *testing.T) {
-	e, c1 := setup(t)
+	// launch etcd server
+	e := setup(t)
 	defer e.Close()
-	etcD, err := storage.NewEtcdStorage([]string{c1})
+
+	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -310,9 +320,11 @@ func TestIncidentsNonEmpty(t *testing.T) {
 }
 
 func TestIngest(t *testing.T) {
-	e, c1 := setup(t)
+	// launch etcd server
+	e := setup(t)
 	defer e.Close()
-	etcD, err := storage.NewEtcdStorage([]string{c1})
+
+	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
@@ -364,18 +376,13 @@ func TestIngest(t *testing.T) {
 	assert.Nil(t, etcD.Purge("env"))
 }
 
-func setup(t *testing.T) (*embed.Etcd, string) {
+func setup(t *testing.T) *embed.Etcd {
 	// launch etcd server
 	cfg := embed.NewConfig()
 	cfg.Dir = "default.etcd"
-	p1, p2 := getPorts()
-	cfg.LPUrls = []url.URL{{Scheme: "http", Host: fmt.Sprintf("127.0.0.1:%d", p1)}}
-	cfg.LCUrls = []url.URL{{Scheme: "http", Host: fmt.Sprintf("127.0.0.1:%d", p2)}}
-	cfg.LogOutputs = []string{"stderr"}
 	e, err := embed.StartEtcd(cfg)
 	if err != nil {
 		log.Fatal(err)
-		t.Fail()
 	}
 	select {
 	case <-e.Server.ReadyNotify():
@@ -385,19 +392,5 @@ func setup(t *testing.T) (*embed.Etcd, string) {
 		log.Printf("Server took too long to start!")
 		t.Fail()
 	}
-	connectionString := fmt.Sprintf("127.0.0.1:%d", p2)
-	return e, connectionString
-}
-
-func getPorts() (int, int) {
-	c = chance.New()
-portPick:
-	p1 := c.IntBtw(3100, 3200)
-	p2 := c.IntBtw(3100, 3200)
-	for _, b := range usedPorts {
-		if b == p1 || b == p2 {
-			goto portPick
-		}
-	}
-	return p1, p2
+	return e
 }
