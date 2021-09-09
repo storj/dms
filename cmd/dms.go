@@ -65,6 +65,10 @@ func main() {
 	i.Use(middleware.BasicAuth(basicAuthMiddlewareFunc))
 	i.GET("", dmsRouter.Status)
 
+	k := e.Group("/incidents")
+	k.Use(middleware.BasicAuth(basicAuthMiddlewareFunc))
+	k.GET("", dmsRouter.Incidents)
+
 	// Ingest route (jwt)
 	r := e.Group("/ingest")
 	r.Use(middleware.JWT([]byte(*jwtSecret)))

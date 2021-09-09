@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -36,37 +37,75 @@ func NewEtcdStorage(endpoints []string) (*EtcdStorage, error) {
 }
 
 // Store stores the key
-func (etcds *EtcdStorage) Store(key string, value Data) error {
+func (etcds *EtcdStorage) StoreCheckin(key string, value time.Time) error {
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
-	encoded, _ := json.Marshal(value)
-	_, err := etcds.kv.Put(ctx, fmt.Sprintf("env=%s", key), string(encoded))
-	cancel()
+	defer cancel()
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		return errors.Wrap(err, "failed to store key")
+	}
+	key = strings.TrimSuffix(strings.TrimPrefix(key, "env/"), "/last") // sanitize the strings
+	_, err = etcds.kv.Put(ctx, fmt.Sprintf("env/%s/last", key), string(encoded))
+	return errors.Wrap(err, "failed to store key")
+}
+
+func (etcds *EtcdStorage) StoreIncident(key string, date string, value []time.Time) error {
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		return errors.Wrap(err, "failed to store key")
+	}
+	key = strings.TrimSuffix(strings.TrimPrefix(key, "env/"), "/last") // sanitize the strings
+	_, err = etcds.kv.Put(ctx, fmt.Sprintf("env/%s/incidents/%s", key, date), string(encoded))
 	return errors.Wrap(err, "failed to store key")
 }
 
 // All returns a map of all keys and values
-func (etcds *EtcdStorage) All() (map[string]Data, error) {
+func (etcds *EtcdStorage) AllCheckins() (map[string]time.Time, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
 	v, err := etcds.kv.Get(ctx, "env", clientv3.WithPrefix())
-	cancel()
 	if err != nil {
-		return map[string]Data{}, errors.Wrap(err, "failed to retrieve all stored values")
+		return nil, errors.Wrap(err, "failed to retrieve all checkins")
 	}
-	all := map[string]Data{}
+	all := map[string]time.Time{}
 	for _, item := range v.Kvs {
-		var data Data
-		if err := json.Unmarshal(item.Value, &data); err != nil {
-			return map[string]Data{}, nil
+		if strings.Contains(string(item.Key), "last") {
+			var data time.Time
+			if err := json.Unmarshal(item.Value, &data); err != nil {
+				return nil, errors.Wrap(err, "failed to retrieve all checkins")
+			}
+			all[string(item.Key)] = data
 		}
-		all[string(item.Key)] = data
 	}
 	return all, nil
 }
 
-// Purge removes all keys with "env" prefix
-func (etcds *EtcdStorage) Purge() error {
+func (etcds *EtcdStorage) AllIncidents() (map[string][]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
-	_, err := etcds.kv.Delete(ctx, "env", clientv3.WithPrefix())
-	cancel()
+	defer cancel()
+	v, err := etcds.kv.Get(ctx, "env", clientv3.WithPrefix())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to retrieve all stored environments")
+	}
+	all := map[string][]string{}
+	for _, item := range v.Kvs {
+		if strings.Contains(string(item.Key), "incidents") {
+			var data []string
+			if err := json.Unmarshal(item.Value, &data); err != nil {
+				return nil, errors.Wrap(err, "failed to retrieve all stored incidents")
+			}
+			all[string(item.Key)] = data
+		}
+	}
+	return all, nil
+}
+
+// Purge removes all keys with directory/env prefix
+func (etcds *EtcdStorage) Purge(prefix string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+	_, err := etcds.kv.Delete(ctx, prefix, clientv3.WithPrefix())
 	return err
 }

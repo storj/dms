@@ -3,6 +3,7 @@ package storage_test
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"testing"
 	"time"
 
@@ -17,37 +18,49 @@ func TestEtcdStorage(t *testing.T) {
 	e := setup(t)
 	defer e.Close()
 
-	etcD, err := storage.NewEtcdStorage([]string{"localhost:2379"})
+	etcD, err := storage.NewEtcdStorage([]string{"localhost:2382"})
 	assert.Nil(t, err)
 	assert.NotNil(t, etcD)
 
-	assert.Nil(t, etcD.Purge())
+	assert.Nil(t, etcD.Purge("env"))
 
-	err = etcD.Store("env=foo", storage.Data{})
+	checkinTime := time.Now()
+	err = etcD.StoreCheckin("foo", checkinTime)
 	assert.Nil(t, err)
 
-	all, err := etcD.All()
+	all, err := etcD.AllCheckins()
 	assert.Nil(t, err)
-	assert.Equal(t, len(all), 1)
+	assert.Equal(t, 1, len(all))
 
-	assert.Nil(t, etcD.Purge())
+	incidentTime := time.Now()
+	err = etcD.StoreIncident("foo", "2021-07-17", []time.Time{incidentTime})
+	assert.Nil(t, err)
+
+	allInc, err := etcD.AllIncidents()
+	assert.Nil(t, err)
+	log.Printf("%+v", allInc)
+	assert.Equal(t, 1, len(allInc["env/foo/incidents/2021-07-17"]))
+
+	assert.Nil(t, etcD.Purge("env"))
 
 	for i := 0; i < 5; i++ {
-		err = etcD.Store(fmt.Sprintf("env=bar_%d", i), storage.Data{})
+		err = etcD.StoreCheckin(fmt.Sprintf("bar_%d", i), time.Now())
 		assert.Nil(t, err)
 	}
 
-	all, err = etcD.All()
+	all, err = etcD.AllCheckins()
 	assert.Nil(t, err)
-	assert.Equal(t, len(all), 5)
+	assert.Equal(t, 5, len(all))
 
-	assert.Nil(t, etcD.Purge())
+	assert.Nil(t, etcD.Purge("env"))
 }
 
 func setup(t *testing.T) *embed.Etcd {
 	// launch etcd server
 	cfg := embed.NewConfig()
 	cfg.Dir = "default.etcd"
+	cfg.LPUrls = []url.URL{{Scheme: "http", Host: "127.0.0.1:2381"}}
+	cfg.LCUrls = []url.URL{{Scheme: "http", Host: "127.0.0.1:2382"}}
 	e, err := embed.StartEtcd(cfg)
 	if err != nil {
 		log.Fatal(err)

@@ -18,9 +18,20 @@ curl -H "Authorization: Bearer <jwt_token>" -XPOST <dms_endpoint>/ingest
 curl <dms_endpoint>/pingdom
 ```
 
-### Status
+#### Status
 ```bash
 curl --user <basic_auth_user>:<basic_auc_password> <dms_endpoint>/status
 ```
+
+#### Incidents
+```bash
+curl --user <basic_auth_user>:<basic_auc_password> <dms_endpoint>/incidents
+```
+
+### Test
+```bash
+go test -parallel 1 -v ./pkg/routes/... ./pkg/storage/... -cover
+```
+
 ### Author
 - [kristaxox](https://github.com/kristaxox)

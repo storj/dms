@@ -21,14 +21,15 @@ type DMSRouter struct {
 // Pingdom is the endpoint that pingdom will query, it returns 200 if all the checks are within the heartbearExpiration
 // and it returns 500 if any of the checks are outside of the heartbearExpiration
 func (r *DMSRouter) Pingdom(c echo.Context) error {
-	all, err := r.Store.All()
+	all, err := r.Store.AllCheckins()
 	if err != nil {
 		logrus.WithError(err).Error("unable to retrieve all stored data from etcd")
 	}
 	for k, v := range all {
-		if v.Last != (time.Time{}) {
-			if time.Since(v.Last) > (r.HeartbeatExpiration) {
+		if v != (time.Time{}) {
+			if time.Since(v) > (r.HeartbeatExpiration) {
 				logrus.Debugf("environment=%s has not checked in for %s", k, r.HeartbeatExpiration)
+				r.Store.StoreIncident(k, time.Now().Format("2006-01-02"), []time.Time{time.Now()})
 				return c.JSON(http.StatusInternalServerError, "one of more services have not checked in")
 			}
 		}
@@ -50,7 +51,7 @@ func (r *DMSRouter) Register(c echo.Context) error {
 		return err
 	}
 
-	r.Store.Store(claims["environment"].(string), storage.Data{})
+	r.Store.StoreCheckin(claims["environment"].(string), time.Time{})
 
 	return c.JSON(http.StatusCreated, map[string]string{
 		"token": t,
@@ -59,7 +60,16 @@ func (r *DMSRouter) Register(c echo.Context) error {
 
 // Status is an internal endpoint
 func (r *DMSRouter) Status(c echo.Context) error {
-	all, err := r.Store.All()
+	all, err := r.Store.AllCheckins()
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+	return c.JSON(http.StatusOK, all)
+}
+
+// Incidents returns a list of recent incidents
+func (r *DMSRouter) Incidents(c echo.Context) error {
+	all, err := r.Store.AllIncidents()
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -72,9 +82,7 @@ func (r *DMSRouter) Ingest(c echo.Context) error {
 	claims := source.Claims.(jwt.MapClaims)
 	environment := claims["environment"].(string)
 
-	r.Store.Store(environment, storage.Data{
-		Last: time.Now(),
-	})
+	r.Store.StoreCheckin(environment, time.Now())
 
 	return c.String(http.StatusOK, "from "+environment)
 }
